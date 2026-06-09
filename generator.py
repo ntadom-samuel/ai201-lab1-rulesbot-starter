@@ -35,5 +35,36 @@ def generate_response(query, retrieved_chunks):
             "Try rephrasing your question — or check that your ingestion pipeline is working."
         )
 
-    # Your implementation here.
-    return "⚙️ Response generation not yet implemented. Complete Milestone 3 to activate answers."
+    relevant_chunks = [c for c in retrieved_chunks if c["distance"] <= 0.7]
+    if not relevant_chunks:
+        return (
+            "I couldn't find a confident answer to that in the loaded rules. "
+            "The context I retrieved doesn't seem relevant enough to answer reliably. "
+            "Try rephrasing, or consult the official rulebook directly."
+        )
+
+    context_parts = []
+    for chunk in relevant_chunks:
+        context_parts.append(f"[Game: {chunk['game']}]\n{chunk['text']}")
+    context_block = "\n\n---\n\n".join(context_parts)
+
+    system_message = (
+        "You are a board game rules assistant. Answer ONLY using the rule text provided below. "
+        "Do NOT use your general knowledge about board games. If the answer is not in the provided context, "
+        "say so clearly — do not guess.\n\n"
+        "When answering, always state which game the rule comes from, e.g. "
+        "\"According to [Game Name]'s rules, ...\" If the context includes rules from multiple games, "
+        "specify which game each part of your answer comes from."
+    )
+
+    user_message = f"Context:\n{context_block}\n\nQuestion: {query}"
+
+    response = _client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message},
+        ],
+    )
+
+    return response.choices[0].message.content

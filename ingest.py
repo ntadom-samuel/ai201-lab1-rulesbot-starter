@@ -5,6 +5,7 @@ from config import DOCS_PATH
 def load_documents():
     """Load all .txt rule documents from the docs folder."""
     documents = []
+    print("From ingest.py: ", os.listdir(DOCS_PATH))
     for filename in sorted(os.listdir(DOCS_PATH)):
         if filename.endswith(".txt"):
             filepath = os.path.join(DOCS_PATH, filename)
